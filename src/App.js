@@ -1,24 +1,32 @@
-import logo from './logo.svg';
-import './App.css';
+import { createTheme, ThemeProvider } from "@mui/material";
+import { blue, green } from "@mui/material/colors";
+import { Routes, Route } from "react-router-dom";
+import MyNotes from "./pages/mynotes/mynotes.component";
+import Navigation from "./pages/navigation/navigation.component";
+import SharedNotes from "./pages/shared notes/shared.component";
+import SignIn from "./pages/sign in page/signin.component";
+
+const theme = createTheme({
+  palette: {
+    primary: blue,
+    secondary: green
+  },
+  typography: {
+    fontFamily: "Poppins, sans-serif"
+  }
+})
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider theme={theme}>
+      <Routes>
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/" element={<Navigation />}>
+          <Route index element={<MyNotes />} />
+          <Route path="/shared-notes" element={<SharedNotes />} />
+        </Route>
+      </Routes>
+    </ThemeProvider>
   );
 }
 
