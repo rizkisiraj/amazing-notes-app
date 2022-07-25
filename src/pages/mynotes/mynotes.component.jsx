@@ -15,7 +15,6 @@ const MyNotes = () => {
         if(currentUser) {
             const collectionRef = collection(db, "users", currentUser.uid, "notelist");
             const q = query(collectionRef,orderBy("pinned",'desc'))
-            console.log(currentUser)
             const unsubsctibe = onDocumentSnapshotListener(q,(snapshot) => {
                 const liberalData = [];
                 snapshot.forEach(snap => liberalData.push(snap.data()))

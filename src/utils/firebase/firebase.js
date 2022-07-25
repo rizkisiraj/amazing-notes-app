@@ -86,9 +86,33 @@ export const addNotes = async (user,{title, details, category}) => {
     title,
     details,
     category,
-    pinned: false
+    pinned: false,
+    type: "Private"
   })
 }
+
+export const addPublicNotes = async (user,{title, details, category}) => {
+  const collectionRef = collection(db, "shared notes", user.sharedNotes, "notelist");
+  await addDoc(collectionRef, {
+    createdAt: serverTimestamp(),
+    title,
+    details,
+    category,
+    pinned: false,
+    type: "Public"
+  })
+}
+
+export const deletePublicNotes = async (user, createdAt) => {
+  const collectionRef = collection(db, "shared notes", user.sharedNotes, "notelist");
+  const docRef = query(collectionRef, where("createdAt","==",createdAt));
+
+  const querySnapshot = await getDocs(docRef);
+  querySnapshot.forEach(theDoc => {
+    deleteDoc(doc(db,"shared notes",user.sharedNotes,"notelist",theDoc.id));
+  })
+}
+
 
 export const deleteNotes = async (user, createdAt) => {
   const collectionRef = collection(db, "users", user.uid, "notelist")
@@ -115,6 +139,20 @@ export const updateNotes = async (user, createdAt,note) => {
   });
 
 }
+
+export const updatePublicNotes = async (user, createdAt,note) => {
+  const collectionRef = collection(db, "shared notes", user.sharedNotes, "notelist")
+  const docRef = query(collectionRef, where("createdAt", "==", createdAt));
+
+  const querySnapshot = await getDocs(docRef);
+  querySnapshot.forEach((theDoc) => {
+    // doc.data() is never undefined for query doc snapshots
+    updateDoc(doc(db,"shared notes",user.sharedNotes,"notelist",theDoc.id),{
+      ...note
+    });
+  });
+
+}
 export const pinNote = async (user, createdAt,pinned) => {
   const collectionRef = collection(db, "users", user.uid, "notelist")
   const docRef = query(collectionRef, where("createdAt", "==", createdAt));
@@ -129,5 +167,23 @@ export const pinNote = async (user, createdAt,pinned) => {
 
 }
 
+export const searchNote = async (docsId) => {
+  const docsRef = collection(db, "shared notes");
+  const docsQuery = query(docsRef,where("id","==",docsId));
+  
+  const querySnapshot = await getDocs(docsQuery);
+  let targetedDoc = null;
+  querySnapshot.forEach((theDoc) => {
+    targetedDoc = theDoc.id;
+  })
+  return targetedDoc;
+}
+
+export const addPublicUser = async (user,notesId) => {
+  const userDocRef = doc(db,"users",user.uid);
+  updateDoc(userDocRef, {
+    sharedNotes: notesId
+  })
+}
 
 export const onDocumentSnapshotListener = (ref, callback) => onSnapshot(ref,callback);

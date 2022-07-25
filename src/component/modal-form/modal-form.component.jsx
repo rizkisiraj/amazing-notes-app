@@ -1,9 +1,10 @@
 
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, TextField } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, FormControlLabel, FormLabel, MenuItem, Radio, RadioGroup, Select, TextField, useMediaQuery, useTheme } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { editedModalContext } from "../../contexts/editedModal.context";
 import { userContext } from "../../contexts/user.context";
-import { addNotes, updateNotes } from "../../utils/firebase/firebase";
+import { addNotes, addPublicNotes, updateNotes, updatePublicNotes } from "../../utils/firebase/firebase";
+import { useLocation } from "react-router-dom";
 
 
 const noteConstructor = {
@@ -14,12 +15,16 @@ const noteConstructor = {
 const ModalForm = () => {
     const [note, setNote] = useState(noteConstructor);
     const { title, details } = note;
-    const [category,setCategory] = useState("")
+    const [category,setCategory] = useState("");
+    const [type, setType] = useState("Private");
     const [titleError, setTitleError] = useState(false);
     const [detailsError, setDetailsError] = useState(false);
     const [categoryError, setCategoryError] = useState(false);
-    const { currentUser } = useContext(userContext);
-    const { modalOpen, setModalOpen, editedModal, setEditedModal } = useContext(editedModalContext)
+    const location = useLocation();
+    const { currentUser,userData } = useContext(userContext);
+    const { modalOpen, setModalOpen, editedModal, setEditedModal } = useContext(editedModalContext);
+    const theme = useTheme();
+    const fullscreen = useMediaQuery(theme.breakpoints.down("md"))
 
     useEffect(() => {
         if(editedModal) {
@@ -28,8 +33,17 @@ const ModalForm = () => {
                 details: editedModal.details
             })
             setCategory(editedModal.category)
+            setType(editedModal.type)
         }
-    },[editedModal])
+    },[editedModal]);
+
+    useEffect(() => {
+        if(location.pathname === "/shared-notes") {
+            setType("Public")
+        } else {
+            setType("Private")
+        }
+    },[location.pathname])
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -74,14 +88,26 @@ const ModalForm = () => {
         if(title && details && category) {
             setModalOpen(false);
             if(editedModal) {
-                await updateNotes(currentUser,editedModal.createdAt,{
-                    title,
-                    details,
-                    category
-                })
-                console.log("ganteng")
+                if(type === "Public") {
+                    await updatePublicNotes(userData,editedModal.createdAt,{
+                        title,
+                        details,
+                        category,
+                    })
+                } else {
+                    await updateNotes(currentUser,editedModal.createdAt,{
+                        title,
+                        details,
+                        category,
+                    })
+                }
             } else {
-                await addNotes(currentUser,{title, details, category})
+                if(type === "Public") {
+                    await addPublicNotes(userData,{title, details, category});
+                } else {
+                    await addNotes(currentUser,{title, details, category})
+                    
+                }
             }
             resetTextField();
             console.log("sudah ditambahkan kak");
@@ -91,6 +117,7 @@ const ModalForm = () => {
 
     return (
         <Dialog
+            fullScreen={fullscreen}
             fullWidth
             maxWidth={"sm"}
             open={modalOpen}
@@ -102,6 +129,15 @@ const ModalForm = () => {
             <Divider />
                 <form onSubmit={handleSubmit}>
                 <DialogContent>
+                <Select
+                    labelId="personal or shared select"
+                    id="simple-select"
+                    value={type}
+                    sx={{mb: 2}}
+                >
+                    <MenuItem value={"Private"}>Private</MenuItem>
+                    <MenuItem value={"Public"}>Public</MenuItem>
+                </Select>
                 <TextField
                 name="title"
                 value={title}
