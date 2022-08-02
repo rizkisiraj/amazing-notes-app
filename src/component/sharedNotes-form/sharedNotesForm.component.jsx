@@ -1,7 +1,7 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from "@mui/material";
 import { useContext, useState } from "react"
 import { userContext } from "../../contexts/user.context";
-import { addPublicUser, searchNote } from "../../utils/firebase/firebase";
+import { addPublicUser, createPublicNotes, searchNote } from "../../utils/firebase/firebase";
 
 
 
@@ -9,9 +9,11 @@ const SharedNotesForm = ({modalOpen, setModalOpen}) => {
     const [inputId,setInputId] = useState("");
     const [searchId, setsearchId] = useState("");
     const [isCreating, setIsCreating] = useState(false);
+    const [alert, setAlert] = useState(false);
     const {userData, setUserData, currentUser} = useContext(userContext);
     const handleOpen = () => {
-        setModalOpen(false)
+        setAlert(false)
+        setModalOpen(false);
     }
 
     const handleChange = (e) => {
@@ -30,14 +32,27 @@ const SharedNotesForm = ({modalOpen, setModalOpen}) => {
            await addPublicUser(currentUser,notesId);
            
            if(notesId) {
+                setAlert(false);
                 setUserData({
                     ...userData,
                     sharedNotes: notesId
                 })
+                setModalOpen(false);
                 return;
+            } 
+            setAlert(true);
+
+        } else {
+            const notesId = await createPublicNotes(inputId);
+            if(notesId) {
+                await addPublicUser(currentUser, inputId);
+                setUserData({
+                    ...userData,
+                    sharedNotes: inputId
+                })
+                setModalOpen(false);
             }
 
-            console.log("gaada coy");
         }
     }
 
@@ -58,14 +73,17 @@ const SharedNotesForm = ({modalOpen, setModalOpen}) => {
                 fullWidth
                 label="Notes Id"
                 variant="filled"
-                value={searchId}
+                value={isCreating ? inputId : searchId}
                 onChange={handleChange}
                 sx={{mb: 2}}
 
                 />
-                <Button variant="contained" color="primary" type="submit">
-                    {isCreating ? "Create Notes" : "Search Notes"}
-                </Button>
+                <Box sx={{display: "flex", justifyContent: "space-between"}}>
+                    <Button variant="contained" color="primary" type="submit">
+                        {isCreating ? "Create Notes" : "Search Notes"}
+                    </Button>
+                    <Typography color={!alert ? "InactiveCaption" : "red"} component="span" variant="body2">No notes with that id</Typography>
+                </Box>
                 </form>
             </DialogContent>
         </Dialog>

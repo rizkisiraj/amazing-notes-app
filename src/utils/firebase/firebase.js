@@ -79,6 +79,29 @@ export const signOutUser = async () => await signOut(auth);
 
 export const onAuthStateChangeListener = (callback) => onAuthStateChanged(auth, callback);
 
+export const createPublicNotes = async (publicNoteId) => {
+  const noteDocRef = doc(db,"shared notes",publicNoteId);
+
+  const noteSnapshot = await getDoc(noteDocRef);
+
+    if(!noteSnapshot.exists()) {
+      const createdAt = serverTimestamp();
+
+      try {
+        await setDoc(noteDocRef, {
+          createdAt,
+          id: publicNoteId
+        });
+      } catch(e)  {
+        console.log("error creating this note",e.message);
+      }
+    } else {
+      return null;
+    }
+    return noteDocRef;
+
+}
+
 export const addNotes = async (user,{title, details, category}) => {
   const collectionRef = collection(db, "users", user.uid, "notelist");
   await addDoc(collectionRef, {

@@ -1,8 +1,9 @@
-import { Box, Button, InputAdornment, TextField, Typography, useTheme } from "@mui/material";
+import { Box, Button, CircularProgress, InputAdornment, TextField, Typography, useTheme } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
+import LoadingButton from '@mui/lab/LoadingButton';
 import { createAuthUserWithEmailAndPassword, createUserDocumentFromAuth, setUserObject, signAuthUserWithEmailAndPassword} from "../../utils/firebase/firebase";
 import { userContext } from "../../contexts/user.context";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +23,7 @@ const inputs = {
 
 const SignIn = () => {
     const [isRegistering, setIsRegistering] = useState(false);
-    const [dialogOpen, setDialogOpen] = useState(false);
+    const [isLoading, setisLoading] = useState(false);
     const [input, setInput] = useState(inputs);
     const [fullnameError, setFullNameError] = useState(false);
     const [emailError, setEmailError] = useState(false);
@@ -46,10 +47,6 @@ const SignIn = () => {
         })
     }
 
-    const handleModal = () => {
-        setDialogOpen(false)
-    }
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setEmailError(false)
@@ -70,7 +67,7 @@ const SignIn = () => {
             }
 
             if(fullname && email && password) {
-                setDialogOpen(true)
+                setisLoading(true)
                 const response = await createAuthUserWithEmailAndPassword(email,password);
                 await createUserDocumentFromAuth(response.user, { displayName: fullname })
                 const userCred = await setUserObject(response.user);
@@ -82,7 +79,7 @@ const SignIn = () => {
         }
 
         if(email && password) {
-            setDialogOpen(true)
+            setisLoading(true)
             const response = await signAuthUserWithEmailAndPassword(email, password);
             await createUserDocumentFromAuth(response.user, { displayName: fullname })
             const userCred = await setUserObject(response.user);
@@ -175,15 +172,18 @@ const SignIn = () => {
                         )}
                     }
                 />
-                <Button
+                <LoadingButton
                 fullWidth
                 variant="contained"
                 size="large"
                 type="submit"
+                loading={isLoading}
+                loadingPosition="start"
+                startIcon={null}
                 >
-                    {!isRegistering ? "Sign In" : "Register"}
+                    {!isRegistering ? "Sign in" : "Register"}
                     
-                </Button>
+                </LoadingButton>
                 {
                     !isRegistering && (
                         <>
@@ -217,7 +217,6 @@ const SignIn = () => {
                 }
             </form>
         </Box>
-            <LoadingDialog modalOpen={dialogOpen} handleModal={handleModal} />
         </Box>
     )
 }
